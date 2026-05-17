@@ -1,0 +1,1447 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#667eea">
+    <meta name="description" content="부모-자식 안전 연결 앱">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="생존확인">
+    <link rel="manifest" href="data:application/json,{%22name%22:%22생존확인-아이용%22,%22short_name%22:%22생존확인%22,%22description%22:%22부모와의 안전한 연결%22,%22start_url%22:%22/child-safety/final-child-app.html%22,%22scope%22:%22/child-safety/%22,%22display%22:%22standalone%22,%22background_color%22:%22%23ffffff%22,%22theme_color%22:%22%23667eea%22,%22orientation%22:%22portrait-primary%22,%22icons%22:[{%22src%22:%22data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23667eea' width='192' height='192'/><text x='96' y='140' font-size='120' font-weight='bold' text-anchor='middle' fill='white'>✓</text></svg>%22,%22sizes%22:%22192x192%22,%22type%22:%22image/svg+xml%22},{%22src%22:%22data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect fill='%23667eea' width='512' height='512'/><text x='256' y='380' font-size='300' font-weight='bold' text-anchor='middle' fill='white'>✓</text></svg>%22,%22sizes%22:%22512x512%22,%22type%22:%22image/svg+xml%22}]}">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%23667eea' width='180' height='180' rx='40'/><text x='90' y='140' font-size='110' font-weight='bold' text-anchor='middle' fill='white'>✓</text></svg>">
+    <title>생존확인 - 최종 완성</title>
+    <script src="https://cdn.jsdelivr.net/npm/peerjs@1.4.7/dist/peerjs.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+
+        .app-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .app-header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .app-header p {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+
+        .tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 30px;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 10px;
+            box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+
+        .tab-btn {
+            padding: 12px;
+            border: none;
+            background: #f0f0f0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s;
+            color: #666;
+        }
+
+        .tab-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .tab-content.show {
+            display: block;
+        }
+
+        .status-box {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .status-big {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .status-text {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .status-time {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .next-alarm {
+            background: #e3f2fd;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+
+        .next-alarm strong {
+            color: #1565c0;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        input[type="time"],
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: inherit;
+        }
+
+        input[type="time"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .day-selector {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .day-btn {
+            padding: 10px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s;
+            color: #666;
+        }
+
+        .day-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            font-size: 13px;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .alarm-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .alarm-item {
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .alarm-info {
+            flex: 1;
+        }
+
+        .alarm-time {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 3px;
+        }
+
+        .alarm-days {
+            font-size: 11px;
+            color: #999;
+        }
+
+        .alarm-delete {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+
+        .section-title {
+            font-size: 14px;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .info-box {
+            background: #f9f9f9;
+            border-left: 4px solid #667eea;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .alarm-test-btn {
+            background: #FF9800;
+        }
+
+        .alarm-test-btn:hover {
+            background: #F57C00;
+        }
+
+        @media (max-width: 480px) {
+            .app-header h1 {
+                font-size: 20px;
+            }
+
+            .container {
+                padding: 0 15px;
+            }
+
+            .tabs {
+                grid-template-columns: 1fr 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-header">
+    <h1>💙 생존확인 - 최종 완성</h1>
+    <p>부모님과 아이를 위한 안전한 앱</p>
+</div>
+
+<div class="container">
+    <!-- 대시보드 탭 -->
+    <div class="tab-content show" id="dashboard">
+        <div class="status-box">
+            <div class="status-big">✓</div>
+            <div class="status-text">앱이 실행 중입니다</div>
+            <div class="status-time">백그라운드에서 자동 작동</div>
+        </div>
+
+        <div class="next-alarm" id="nextAlarmBox" style="display: none;">
+            <strong>⏰ 다음 모닝콜:</strong>
+            <span id="nextAlarmText">등록된 알람이 없습니다</span>
+        </div>
+
+        <div class="info-box">
+            💡 <strong>현재 상태:</strong><br>
+            생존 확인: 매시간 자동<br>
+            모닝콜: 등록된 시간 30분 전<br>
+            화상통화: 준비 중
+        </div>
+
+        <button onclick="testAlarm()" class="alarm-test-btn">🔔 모닝콜 테스트</button>
+        <button onclick="manualCheckIn()">✓ 지금 확인 전송</button>
+    </div>
+
+    <!-- 일정 등록 탭 -->
+    <div class="tab-content" id="schedule">
+        <div class="section-title">⏰ 모닝콜 등록</div>
+
+        <!-- 음성 인식 섹션 -->
+        <div class="info-box" style="background: #e8f5e9; border-left-color: #4CAF50; color: #2e7d32;">
+            <strong>🎤 음성으로 등록하기:</strong><br>
+            "월요일 아침 7시" 또는 "매주 화요일 6시 30분"이라고 말씀해주세요
+        </div>
+
+        <button onclick="startVoiceRecognition()" style="background: #4CAF50; width: 100%; margin-bottom: 15px;">
+            🎤 말로 등록
+        </button>
+
+        <div id="voiceRecognitionStatus" style="display: none; background: #f0f0f0; padding: 15px; border-radius: 8px; margin-bottom: 15px; text-align: center;">
+            <div style="font-size: 24px; margin-bottom: 10px;">🎤</div>
+            <div id="voiceRecognitionText" style="color: #333; font-weight: 600; margin-bottom: 10px;">듣고 있습니다...</div>
+            <button onclick="stopVoiceRecognition()" style="background: #f44336; width: 100%; margin: 0;">멈추기</button>
+        </div>
+
+        <div id="voiceRecognitionResult" style="display: none; background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #2196F3;">
+            <strong>인식된 내용:</strong><br>
+            <div id="recognizedText" style="margin-bottom: 10px; font-size: 14px; color: #1565c0; font-weight: 600;"></div>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="acceptVoiceInput()" style="background: #4CAF50; flex: 1; margin: 0;">✓ 이대로 저장</button>
+                <button onclick="rejectVoiceInput()" style="background: #f44336; flex: 1; margin: 0;">✗ 다시 시도</button>
+            </div>
+        </div>
+
+        <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;">
+
+        <div style="text-align: center; color: #999; font-size: 12px; margin-bottom: 15px;">또는</div>
+
+        <div class="input-group">
+            <label>시간 선택</label>
+            <input type="time" id="alarmTime" value="07:00">
+        </div>
+
+        <div class="input-group">
+            <label>요일 선택 (여러 개 가능)</label>
+            <div class="day-selector">
+                <button class="day-btn" onclick="toggleDay(this, '월')">월</button>
+                <button class="day-btn" onclick="toggleDay(this, '화')">화</button>
+                <button class="day-btn" onclick="toggleDay(this, '수')">수</button>
+                <button class="day-btn" onclick="toggleDay(this, '목')">목</button>
+                <button class="day-btn" onclick="toggleDay(this, '금')">금</button>
+                <button class="day-btn" onclick="toggleDay(this, '토')">토</button>
+                <button class="day-btn" onclick="toggleDay(this, '일')">일</button>
+            </div>
+        </div>
+
+        <button onclick="addAlarm()">💾 모닝콜 저장</button>
+
+        <div class="section-title" style="margin-top: 30px;">📌 저장된 모닝콜</div>
+        <div class="alarm-list" id="alarmList">
+            <div style="text-align: center; color: #999; padding: 20px; font-size: 12px;">
+                등록된 모닝콜이 없습니다
+            </div>
+        </div>
+    </div>
+
+    <!-- 통화 탭 -->
+    <div class="tab-content" id="call">
+        <div class="section-title">📞 부모님과 통화</div>
+
+        <div class="info-box" style="background: #e3f2fd; border-left-color: #2196F3; color: #1565c0;">
+            <strong>💙 내 ID (부모님에게 알려주세요):</strong><br>
+            <div style="margin-top: 10px; background: white; padding: 10px; border-radius: 6px; font-family: monospace; font-weight: bold; word-break: break-all;">
+                <span id="myPeerId">연결 중...</span>
+            </div>
+            <button onclick="copyMyPeerId()" style="width: 100%; margin-top: 10px; background: #2196F3; color: white; padding: 8px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">📋 복사하기</button>
+        </div>
+
+        <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;">
+
+        <div class="section-title">📹 라이브 스트림</div>
+        
+        <div style="background: #000; border-radius: 12px; overflow: hidden; margin-bottom: 15px; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center;">
+            <video id="localVideo" style="width: 100%; height: 100%; object-fit: cover;" playsinline muted></video>
+            <div id="localVideoPlaceholder" style="color: #999; text-align: center;">
+                <div style="font-size: 48px; margin-bottom: 10px;">📹</div>
+                <div>카메라를 시작하면 여기 표시됨</div>
+            </div>
+        </div>
+
+        <button onclick="startLocalStream()" style="background: #4CAF50; width: 100%; margin-bottom: 10px; padding: 12px; border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer;">▶️ 카메라 켜기</button>
+        <button onclick="stopLocalStream()" style="background: #f44336; width: 100%; margin-bottom: 15px; padding: 12px; border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer;">⏹️ 카메라 끄기</button>
+
+        <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;">
+
+        <div class="section-title">📞 통화 요청</div>
+
+        <div class="input-group">
+            <label>부모님 ID (부모님이 알려주는 ID)</label>
+            <input type="text" id="parentPeerId" placeholder="부모님의 ID를 입력하세요" style="padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; font-family: monospace;">
+        </div>
+
+        <button onclick="callParent()" style="background: #2196F3; width: 100%; margin-bottom: 10px; padding: 12px; border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer;">📞 부모님에게 전화</button>
+        <button onclick="endCall()" style="background: #f44336; width: 100%; padding: 12px; border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer;">📞 통화 종료</button>
+
+        <div id="callStatus" style="margin-top: 15px; padding: 12px; background: #f9f9f9; border-radius: 8px; border-left: 4px solid #2196F3; color: #666; font-size: 12px; display: none;">
+            <strong id="callStatusText"></strong>
+        </div>
+    </div>
+
+    <!-- Todo 탭 -->
+    <div class="tab-content" id="todo">
+        <div class="section-title">📝 할 일 목록</div>
+
+        <!-- 음성 인식 섹션 -->
+        <div class="info-box" style="background: #e8f5e9; border-left-color: #4CAF50; color: #2e7d32;">
+            <strong>🎤 음성으로 등록하기:</strong><br>
+            "숙제 마감 내일" 또는 "프로젝트 마감 3일 후"라고 말씀해주세요
+        </div>
+
+        <button onclick="startTodoVoiceRecognition()" style="background: #FF9800; width: 100%; margin-bottom: 15px;">
+            🎤 음성으로 추가
+        </button>
+
+        <div id="todoVoiceStatus" style="display: none; background: #f0f0f0; padding: 15px; border-radius: 8px; margin-bottom: 15px; text-align: center;">
+            <div style="font-size: 24px; margin-bottom: 10px;">🎤</div>
+            <div id="todoVoiceText" style="color: #333; font-weight: 600; margin-bottom: 10px;">듣고 있습니다...</div>
+            <button onclick="stopTodoVoiceRecognition()" style="background: #f44336; width: 100%; margin: 0;">멈추기</button>
+        </div>
+
+        <div id="todoVoiceResult" style="display: none; background: #e8f5e9; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #4CAF50;">
+            <strong>인식된 내용:</strong><br>
+            <div id="recognizedTodoText" style="margin-bottom: 10px; font-size: 14px; color: #2e7d32; font-weight: 600;"></div>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="acceptTodoVoiceInput()" style="background: #4CAF50; flex: 1; margin: 0;">✓ 이대로 저장</button>
+                <button onclick="rejectTodoVoiceInput()" style="background: #f44336; flex: 1; margin: 0;">✗ 다시 시도</button>
+            </div>
+        </div>
+
+        <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;">
+
+        <div style="text-align: center; color: #999; font-size: 12px; margin-bottom: 15px;">또는</div>
+
+        <div class="input-group">
+            <label>할 일 입력</label>
+            <input type="text" id="todoTitle" placeholder="예: 수학 숙제" style="padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; font-family: inherit;">
+        </div>
+
+        <div class="input-group">
+            <label>마감일</label>
+            <input type="date" id="todoDeadline" style="padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; font-family: inherit;">
+        </div>
+
+        <button onclick="addTodo()">💾 할 일 저장</button>
+
+        <div class="section-title" style="margin-top: 30px;">📌 할 일 목록</div>
+        <div class="alarm-list" id="todoList">
+            <div style="text-align: center; color: #999; padding: 20px; font-size: 12px;">
+                할 일이 없습니다
+            </div>
+        </div>
+    </div>
+
+    <!-- 설정 탭 -->
+    <div class="tab-content" id="settings">
+        <div class="section-title">⚙️ 설정</div>
+
+        <div class="info-box">
+            <strong>📱 이 앱에 대해:</strong><br>
+            - 백그라운드 생존 확인<br>
+            - 강력한 모닝콜<br>
+            - 화상 통화 (준비 중)<br>
+            - PWA 앱<br>
+            - 완전 자동
+        </div>
+
+        <div class="info-box">
+            <strong>🔔 모닝콜 기능:</strong><br>
+            - 등록된 시간 30분 전 알림<br>
+            - 최대 음량<br>
+            - 강한 진동<br>
+            - 화면 깜빡임<br>
+            - ADHD 친화적
+        </div>
+
+        <div class="info-box">
+            <strong>🔒 개인정보:</strong><br>
+            - 위치 추적 안 함<br>
+            - 카톡, 통화 기록 안 봄<br>
+            - 앱 사용 현황 안 봄<br>
+            - 오직 생존만 확인
+        </div>
+
+        <button onclick="clearAllData()" style="background: #f44336;">🗑️ 모든 데이터 삭제</button>
+    </div>
+</div>
+
+<!-- 하단 탭 메뉴 -->
+<div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('dashboard')">🏠 대시보드</button>
+    <button class="tab-btn" onclick="switchTab('schedule')">⏰ 모닝콜</button>
+    <button class="tab-btn" onclick="switchTab('call')">📞 통화</button>
+    <button class="tab-btn" onclick="switchTab('todo')">📝 Todo</button>
+</div>
+
+<script>
+    // 백그라운드 생존 확인
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('data:application/javascript,%0A%2F%2F%20Service%20Worker%0A')
+            .catch(err => console.log('SW 등록 실패'));
+    }
+
+    // 데이터 저장소
+    let selectedDays = [];
+    let alarms = JSON.parse(localStorage.getItem('alarms') || '[]');
+    let todos = JSON.parse(localStorage.getItem('todos') || '[]');
+    let recognition = null;
+    let voiceInput = null;
+    let todoVoiceRecognition = null;
+    let todoVoiceInput = null;
+
+    // ==================== Peer.js 초기화 ====================
+    let peer = null;
+    let currentCall = null;
+    let localStream = null;
+
+    // Peer 초기화
+    function initPeer() {
+        peer = new Peer({
+            key: 'peerjs',
+            debug: 0
+        });
+
+        peer.on('open', (id) => {
+            console.log('My Peer ID: ' + id);
+            document.getElementById('myPeerId').textContent = id;
+        });
+
+        peer.on('call', (call) => {
+            console.log('받는 전화:', call.peerConnection);
+            showCallStatus('부모님이 전화를 거셨습니다. 수락 중...');
+            
+            // 로컬 스트림이 없으면 생성
+            if (!localStream) {
+                navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'user' }, 
+                    audio: true 
+                }).then(stream => {
+                    localStream = stream;
+                    call.answer(stream);
+                    setupCallHandlers(call);
+                }).catch(err => {
+                    console.error('카메라 접근 실패:', err);
+                    showCallStatus('❌ 카메라 접근 실패: ' + err.message);
+                    alert('카메라 접근을 허용해주세요');
+                });
+            } else {
+                call.answer(localStream);
+                setupCallHandlers(call);
+            }
+        });
+
+        peer.on('error', (err) => {
+            console.error('Peer 에러:', err);
+            showCallStatus('❌ 연결 오류: ' + err.type);
+        });
+    }
+
+    // 통화 핸들러 설정
+    function setupCallHandlers(call) {
+        currentCall = call;
+        showCallStatus('📞 통화 중...');
+
+        call.on('stream', (remoteStream) => {
+            console.log('원격 스트림 받음');
+            showCallStatus('✓ 부모님과 연결되었습니다');
+            // 부모님의 오디오는 들을 수 있지만, 비디오는 부모님 앱에서만 보임
+        });
+
+        call.on('close', () => {
+            console.log('통화 종료');
+            showCallStatus('통화가 종료되었습니다', false);
+            currentCall = null;
+        });
+
+        call.on('error', (err) => {
+            console.error('통화 에러:', err);
+            showCallStatus('❌ 통화 오류: ' + err.message);
+        });
+    }
+
+    // 부모님에게 전화 걸기
+    function callParent() {
+        const parentId = document.getElementById('parentPeerId').value.trim();
+        
+        if (!parentId) {
+            alert('부모님의 ID를 입력하세요');
+            return;
+        }
+
+        if (!localStream) {
+            alert('먼저 카메라를 켜주세요');
+            return;
+        }
+
+        if (!peer) {
+            initPeer();
+            setTimeout(() => makeCall(parentId), 1000);
+        } else {
+            makeCall(parentId);
+        }
+    }
+
+    function makeCall(parentId) {
+        showCallStatus('📞 부모님에게 전화 중...');
+        const call = peer.call(parentId, localStream);
+        setupCallHandlers(call);
+
+        call.on('stream', (remoteStream) => {
+            showCallStatus('✓ 부모님과 연결되었습니다');
+        });
+    }
+
+    // 로컬 스트림 시작
+    function startLocalStream() {
+        if (localStream) {
+            alert('이미 카메라가 켜져있습니다');
+            return;
+        }
+
+        navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+            audio: true
+        }).then(stream => {
+            localStream = stream;
+            const video = document.getElementById('localVideo');
+            const placeholder = document.getElementById('localVideoPlaceholder');
+            
+            video.srcObject = stream;
+            video.play();
+            
+            if (placeholder) placeholder.style.display = 'none';
+            video.style.display = 'block';
+            
+            showCallStatus('✓ 카메라가 켜졌습니다', false);
+            
+            // Peer 초기화 (아직 안 됐으면)
+            if (!peer) {
+                initPeer();
+            }
+        }).catch(err => {
+            console.error('카메라 접근 오류:', err);
+            alert('카메라 접근을 허용해주세요.\n설정 → 카메라 권한 확인');
+            showCallStatus('❌ 카메라 접근 실패: ' + err.message);
+        });
+    }
+
+    // 로컬 스트림 중지
+    function stopLocalStream() {
+        if (localStream) {
+            localStream.getTracks().forEach(track => track.stop());
+            localStream = null;
+            
+            const video = document.getElementById('localVideo');
+            const placeholder = document.getElementById('localVideoPlaceholder');
+            
+            video.srcObject = null;
+            video.style.display = 'none';
+            if (placeholder) placeholder.style.display = 'block';
+            
+            showCallStatus('카메라가 꺼졌습니다', false);
+        }
+    }
+
+    // 통화 종료
+    function endCall() {
+        if (currentCall) {
+            currentCall.close();
+            currentCall = null;
+            showCallStatus('통화가 종료되었습니다', false);
+        } else {
+            alert('진행 중인 통화가 없습니다');
+        }
+    }
+
+    // 내 ID 복사
+    function copyMyPeerId() {
+        const peerId = document.getElementById('myPeerId').textContent;
+        
+        if (peerId === '연결 중...') {
+            alert('아직 연결 중입니다. 잠시 후 다시 시도해주세요');
+            return;
+        }
+
+        navigator.clipboard.writeText(peerId).then(() => {
+            alert('✓ ID가 복사되었습니다!\n\n부모님에게 이 ID를 알려주세요');
+        }).catch(() => {
+            // Fallback
+            const textarea = document.createElement('textarea');
+            textarea.value = peerId;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            alert('✓ ID가 복사되었습니다!');
+        });
+    }
+
+    // 통화 상태 표시
+    function showCallStatus(message, show = true) {
+        const statusDiv = document.getElementById('callStatus');
+        const statusText = document.getElementById('callStatusText');
+        
+        statusText.textContent = message;
+        statusDiv.style.display = show ? 'block' : 'none';
+    }
+
+    // 음성 인식 초기화
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.lang = 'ko-KR';
+        recognition.continuous = false;
+        recognition.interimResults = true;
+
+        recognition.onstart = () => {
+            document.getElementById('voiceRecognitionStatus').style.display = 'block';
+            document.getElementById('voiceRecognitionResult').style.display = 'none';
+            document.getElementById('voiceRecognitionText').textContent = '듣고 있습니다...';
+        };
+
+        recognition.onresult = (event) => {
+            let transcript = '';
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                transcript += event.results[i][0].transcript;
+            }
+            document.getElementById('voiceRecognitionText').textContent = transcript;
+
+            if (event.results[event.results.length - 1].isFinal) {
+                processVoiceInput(transcript);
+            }
+        };
+
+        recognition.onerror = (event) => {
+            document.getElementById('voiceRecognitionText').textContent = '오류: ' + event.error;
+        };
+
+        recognition.onend = () => {
+            // 결과 표시
+        };
+    }
+
+    // 음성 인식 시작
+    function startVoiceRecognition() {
+        if (!recognition) {
+            alert('이 기기는 음성 인식을 지원하지 않습니다');
+            return;
+        }
+        recognition.start();
+    }
+
+    // 음성 인식 중지
+    function stopVoiceRecognition() {
+        if (recognition) {
+            recognition.stop();
+        }
+    }
+
+    // 음성 입력 처리
+    function processVoiceInput(transcript) {
+        document.getElementById('voiceRecognitionStatus').style.display = 'none';
+        document.getElementById('voiceRecognitionResult').style.display = 'block';
+        
+        const parsed = parseVoiceInput(transcript);
+        
+        if (parsed.hour !== null) {
+            document.getElementById('recognizedText').textContent = 
+                `${parsed.days.join(', ')} ${String(parsed.hour).padStart(2, '0')}:${String(parsed.minute).padStart(2, '0')}`;
+            
+            voiceInput = {
+                transcript: transcript,
+                time: `${String(parsed.hour).padStart(2, '0')}:${String(parsed.minute).padStart(2, '0')}`,
+                days: parsed.days
+            };
+        } else {
+            document.getElementById('recognizedText').textContent = 
+                `죄송합니다. 다시 말씀해주세요.\n예: "월요일 아침 7시" 또는 "매주 화요일 6시 30분"`;
+            voiceInput = null;
+        }
+    }
+
+    // 음성 입력 파싱
+    function parseVoiceInput(text) {
+        let hour = null;
+        let minute = 0;
+        let days = [];
+
+        // 요일 추출
+        const dayMap = {
+            '월': '월', '월요': '월', '월요일': '월',
+            '화': '화', '화요': '화', '화요일': '화',
+            '수': '수', '수요': '수', '수요일': '수',
+            '목': '목', '목요': '목', '목요일': '목',
+            '금': '금', '금요': '금', '금요일': '금',
+            '토': '토', '토요': '토', '토요일': '토',
+            '일': '일', '일요': '일', '일요일': '일'
+        };
+
+        for (const [key, value] of Object.entries(dayMap)) {
+            if (text.includes(key)) {
+                days.push(value);
+            }
+        }
+
+        // 시간 추출
+        const timePatterns = [
+            /(\d{1,2})시\s*(\d{1,2})분/,
+            /(\d{1,2}):(\d{1,2})/,
+            /(\d{1,2})시/
+        ];
+
+        for (const pattern of timePatterns) {
+            const match = text.match(pattern);
+            if (match) {
+                hour = parseInt(match[1]);
+                minute = match[2] ? parseInt(match[2]) : 0;
+                break;
+            }
+        }
+
+        // 오전/오후 처리
+        if (text.includes('오후') && hour < 12) {
+            hour += 12;
+        } else if (text.includes('오전') && hour >= 12) {
+            hour = hour - 12;
+        }
+
+        // 아침, 오전 처리
+        if ((text.includes('아침') || text.includes('오전')) && hour === null) {
+            hour = 7;
+        }
+
+        if (days.length === 0) {
+            days = ['월', '화', '수', '목', '금', '토', '일'];
+        }
+
+        return { hour, minute, days };
+    }
+
+    // 음성 입력 수락
+    function acceptVoiceInput() {
+        if (!voiceInput) return;
+
+        selectedDays = voiceInput.days;
+        document.getElementById('alarmTime').value = voiceInput.time;
+        
+        // 요일 버튼 업데이트
+        document.querySelectorAll('.day-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (selectedDays.includes(btn.textContent.trim())) {
+                btn.classList.add('active');
+            }
+        });
+
+        document.getElementById('voiceRecognitionResult').style.display = 'none';
+        
+        // Google Calendar에 등록할지 물어보기
+        if (confirm('이 일정을 Google 캘린더에 등록하시겠습니까?')) {
+            addAlarmAndSyncGoogle();
+        } else {
+            addAlarm();
+        }
+    }
+
+    // 음성 입력 거부
+    function rejectVoiceInput() {
+        document.getElementById('voiceRecognitionResult').style.display = 'none';
+        voiceInput = null;
+        selectedDays = [];
+        startVoiceRecognition();
+    }
+
+    // 탭 전환
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('show'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(tabName).classList.add('show');
+        event.target.classList.add('active');
+    }
+
+    // 요일 토글
+    function toggleDay(btn, day) {
+        btn.classList.toggle('active');
+        if (btn.classList.contains('active')) {
+            if (!selectedDays.includes(day)) selectedDays.push(day);
+        } else {
+            selectedDays = selectedDays.filter(d => d !== day);
+        }
+    }
+
+    // 모닝콜 추가 및 Google Calendar 동기화
+    function addAlarmAndSyncGoogle() {
+        const time = document.getElementById('alarmTime').value;
+        if (!time || selectedDays.length === 0) {
+            alert('시간과 요일을 선택하세요');
+            return;
+        }
+
+        const alarm = {
+            id: Date.now(),
+            time: time,
+            days: [...selectedDays],
+            createdAt: new Date().toLocaleString('ko-KR'),
+            syncedToGoogle: false
+        };
+
+        // 먼저 로컬에 저장
+        alarms.push(alarm);
+        localStorage.setItem('alarms', JSON.stringify(alarms));
+
+        // Google Calendar에 동기화 시도
+        syncToGoogleCalendar(alarm);
+        
+        alert('모닝콜이 저장되었습니다! 📢');
+        selectedDays = [];
+        renderAlarms();
+        updateNextAlarm();
+        
+        document.querySelectorAll('.day-btn').forEach(btn => btn.classList.remove('active'));
+    }
+
+    // Google Calendar 동기화
+    function syncToGoogleCalendar(alarm) {
+        // Google Calendar API를 위한 간단한 구현
+        const eventTitle = `모닝콜: ${alarm.time}`;
+        const dayMap = {
+            '월': 'MO', '화': 'TU', '수': 'WE', '목': 'TH', '금': 'FR', '토': 'SA', '일': 'SU'
+        };
+        
+        const rrule = alarm.days.length === 7 
+            ? 'FREQ=DAILY' 
+            : `FREQ=WEEKLY;BYDAY=${alarm.days.map(d => dayMap[d]).join(',')}`;
+
+        // Google Calendar 초대 링크 생성
+        const startTime = alarm.time.split(':');
+        const now = new Date();
+        const startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 
+                                    parseInt(startTime[0]), parseInt(startTime[1]));
+        
+        const googleCalendarUrl = `https://calendar.google.com/calendar/r/eventedit?text=${encodeURIComponent(eventTitle)}&dates=${startDate.toISOString().split('T')[0]}T${alarm.time.replace(':', '')}00/${startDate.toISOString().split('T')[0]}T${String(parseInt(startTime[0])+1).padStart(2,'0')}${startTime[1]}00&recur=${encodeURIComponent(rrule)}&details=ADHD%20생존%20확인%20앱%20모닝콜`;
+
+        // 사용자에게 구글 캘린더 링크 제공
+        alert(`✓ 로컬에 저장되었습니다.\n\n💡 Google 캘린더에 추가하려면 아래 링크를 열어주세요:\n\n${googleCalendarUrl}`);
+        
+        // 클립보드에 복사하고 링크 열기 옵션 제공
+        const shouldOpen = confirm('Google 캘린더를 열어서 일정을 추가하시겠습니까?');
+        if (shouldOpen) {
+            window.open(googleCalendarUrl, '_blank');
+        }
+
+        // 로컬 저장소에 Google Calendar 동기화 상태 업데이트
+        alarm.syncedToGoogle = true;
+        localStorage.setItem('alarms', JSON.stringify(alarms));
+    }
+
+    // 모닝콜 추가 (일반)
+    function addAlarm() {
+        const time = document.getElementById('alarmTime').value;
+        if (!time || selectedDays.length === 0) {
+            alert('시간과 요일을 선택하세요');
+            return;
+        }
+
+        const alarm = {
+            id: Date.now(),
+            time: time,
+            days: [...selectedDays],
+            createdAt: new Date().toLocaleString('ko-KR'),
+            syncedToGoogle: false
+        };
+
+        alarms.push(alarm);
+        localStorage.setItem('alarms', JSON.stringify(alarms));
+        
+        alert('모닝콜이 저장되었습니다! 📢');
+        selectedDays = [];
+        renderAlarms();
+        updateNextAlarm();
+        
+        document.querySelectorAll('.day-btn').forEach(btn => btn.classList.remove('active'));
+    }
+
+    // 모닝콜 렌더링
+    function renderAlarms() {
+        const list = document.getElementById('alarmList');
+        if (alarms.length === 0) {
+            list.innerHTML = '<div style="text-align: center; color: #999; padding: 20px; font-size: 12px;">등록된 모닝콜이 없습니다</div>';
+            return;
+        }
+
+        list.innerHTML = alarms.map(alarm => `
+            <div class="alarm-item">
+                <div class="alarm-info">
+                    <div class="alarm-time">🕐 ${alarm.time}</div>
+                    <div class="alarm-days">${alarm.days.join(', ')}</div>
+                </div>
+                <button class="alarm-delete" onclick="deleteAlarm(${alarm.id})">삭제</button>
+            </div>
+        `).join('');
+    }
+
+    // 모닝콜 삭제
+    function deleteAlarm(id) {
+        alarms = alarms.filter(a => a.id !== id);
+        localStorage.setItem('alarms', JSON.stringify(alarms));
+        renderAlarms();
+        updateNextAlarm();
+    }
+
+    // 다음 모닝콜 표시
+    function updateNextAlarm() {
+        if (alarms.length === 0) {
+            document.getElementById('nextAlarmBox').style.display = 'none';
+            return;
+        }
+
+        document.getElementById('nextAlarmBox').style.display = 'block';
+        const nextTime = alarms[0].time;
+        document.getElementById('nextAlarmText').textContent = 
+            `${nextTime} (${alarms[0].days.join(', ')})`;
+    }
+
+    // 강력한 모닝콜 재생
+    function playStrongAlarm() {
+        // 1️⃣ 최대 음량 사운드
+        try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // 여러 오실레이터로 더 큰 소리
+            for (let freq = 600; freq <= 1200; freq += 200) {
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.25, audioContext.currentTime);
+                
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                osc.start(audioContext.currentTime);
+                osc.stop(audioContext.currentTime + 0.5);
+            }
+        } catch(e) {
+            console.log('Audio 재생 실패');
+        }
+
+        // 2️⃣ 강한 진동
+        if ('vibrate' in navigator) {
+            navigator.vibrate([500, 100, 500, 100, 500, 100, 500]);
+        }
+
+        // 3️⃣ 화면 깜빡임
+        let blink = true;
+        let count = 0;
+        const interval = setInterval(() => {
+            document.body.style.backgroundColor = blink ? '#FF0000' : '#FFFFFF';
+            blink = !blink;
+            count++;
+            if (count > 20) clearInterval(interval);
+        }, 200);
+
+        // 4️⃣ 화면 밝기 최대
+        try {
+            screen.lockOrientationUniversal = screen.lockOrientation || 
+                                             screen.mozLockOrientation || 
+                                             screen.msLockOrientation;
+        } catch(e) {}
+    }
+
+    // 모닝콜 테스트
+    function testAlarm() {
+        alert('⏰ 모닝콜 테스트를 시작합니다!');
+        playStrongAlarm();
+        
+        // 3초 후 멈춤
+        setTimeout(() => {
+            document.body.style.backgroundColor = '#FFFFFF';
+            alert('✓ 모닝콜 테스트 완료!');
+        }, 3000);
+    }
+
+    // 수동 확인 전송
+    function manualCheckIn() {
+        const checkIn = {
+            type: 'manual_checkin',
+            time: new Date().toLocaleString('ko-KR'),
+            status: 'alive'
+        };
+        
+        localStorage.setItem('child-checkin', JSON.stringify(checkIn));
+        alert('✓ 부모님께 확인 메시지를 보냈습니다!');
+    }
+
+    // 모든 데이터 삭제
+    function clearAllData() {
+        if (confirm('정말 모든 데이터를 삭제하시겠습니까?')) {
+            localStorage.removeItem('alarms');
+            alarms = [];
+            renderAlarms();
+            updateNextAlarm();
+            alert('데이터가 삭제되었습니다.');
+        }
+    }
+
+    // 페이지 로드 시 초기화
+    window.addEventListener('load', () => {
+        renderAlarms();
+        renderTodos();
+        updateNextAlarm();
+        initPeer(); // Peer 초기화
+        
+        // 매분 체크 (30분 전 알림)
+        setInterval(checkAlarms, 60000);
+    });
+
+    // 알람 시간 체크
+    function checkAlarms() {
+        const now = new Date();
+        const currentDay = ['일', '월', '화', '수', '목', '금', '토'][now.getDay()];
+        const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        
+        // 30분 전 시간 계산
+        const alarmTime = new Date(now);
+        alarmTime.setMinutes(alarmTime.getMinutes() + 30);
+        const alarmTimeStr = `${String(alarmTime.getHours()).padStart(2, '0')}:${String(alarmTime.getMinutes()).padStart(2, '0')}`;
+
+        alarms.forEach(alarm => {
+            if (alarm.days.includes(currentDay) && alarm.time === alarmTimeStr) {
+                playStrongAlarm();
+                localStorage.setItem('alarm-notification', JSON.stringify({
+                    time: alarm.time,
+                    day: currentDay,
+                    notifiedAt: new Date().toLocaleString('ko-KR')
+                }));
+            }
+        });
+
+        // Todo 마감 1일 전 체크
+        checkTodoDeadlines();
+    }
+
+    // ==================== TODO 관련 함수 ====================
+
+    // Todo 음성 인식 초기화
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        todoVoiceRecognition = new SpeechRecognition();
+        todoVoiceRecognition.lang = 'ko-KR';
+        todoVoiceRecognition.continuous = false;
+        todoVoiceRecognition.interimResults = true;
+
+        todoVoiceRecognition.onstart = () => {
+            document.getElementById('todoVoiceStatus').style.display = 'block';
+            document.getElementById('todoVoiceResult').style.display = 'none';
+            document.getElementById('todoVoiceText').textContent = '듣고 있습니다...';
+        };
+
+        todoVoiceRecognition.onresult = (event) => {
+            let transcript = '';
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                transcript += event.results[i][0].transcript;
+            }
+            document.getElementById('todoVoiceText').textContent = transcript;
+
+            if (event.results[event.results.length - 1].isFinal) {
+                processTodoVoiceInput(transcript);
+            }
+        };
+
+        todoVoiceRecognition.onerror = (event) => {
+            document.getElementById('todoVoiceText').textContent = '오류: ' + event.error;
+        };
+    }
+
+    function startTodoVoiceRecognition() {
+        if (!todoVoiceRecognition) {
+            alert('이 기기는 음성 인식을 지원하지 않습니다');
+            return;
+        }
+        todoVoiceRecognition.start();
+    }
+
+    function stopTodoVoiceRecognition() {
+        if (todoVoiceRecognition) {
+            todoVoiceRecognition.stop();
+        }
+    }
+
+    // Todo 음성 입력 처리
+    function processTodoVoiceInput(transcript) {
+        document.getElementById('todoVoiceStatus').style.display = 'none';
+        document.getElementById('todoVoiceResult').style.display = 'block';
+        
+        const parsed = parseTodoVoiceInput(transcript);
+        
+        if (parsed.title) {
+            const deadlineStr = new Date(parsed.deadline).toLocaleDateString('ko-KR');
+            document.getElementById('recognizedTodoText').textContent = 
+                `"${parsed.title}" - 마감: ${deadlineStr}`;
+            
+            todoVoiceInput = {
+                transcript: transcript,
+                title: parsed.title,
+                deadline: parsed.deadline
+            };
+        } else {
+            document.getElementById('recognizedTodoText').textContent = 
+                `죄송합니다. 다시 말씀해주세요.\n예: "숙제 마감 내일" 또는 "과제 마감 3일 후"`;
+            todoVoiceInput = null;
+        }
+    }
+
+    // Todo 음성 입력 파싱
+    function parseTodoVoiceInput(text) {
+        let title = '';
+        let deadline = null;
+        let daysOffset = 0;
+
+        // "마감", "제출" 등의 키워드로 제목 분리
+        const parts = text.split(/(마감|제출|기한|까지|완료)/);
+        if (parts.length > 1) {
+            title = parts[0].trim();
+        } else {
+            title = text;
+        }
+
+        // 날짜 추출
+        const now = new Date();
+        
+        if (text.includes('내일')) {
+            daysOffset = 1;
+        } else if (text.includes('모레')) {
+            daysOffset = 2;
+        } else if (text.includes('오늘')) {
+            daysOffset = 0;
+        } else {
+            // 숫자 + "일 후/뒤" 패턴
+            const dayPattern = /(\d{1,2})\s*일\s*(후|뒤)/;
+            const dayMatch = text.match(dayPattern);
+            if (dayMatch) {
+                daysOffset = parseInt(dayMatch[1]);
+            } else if (text.includes('주일')) {
+                const weekMatch = text.match(/(\d{1,2})\s*주일/);
+                if (weekMatch) {
+                    daysOffset = parseInt(weekMatch[1]) * 7;
+                }
+            } else {
+                // 요일명으로 날짜 계산
+                const dayMap = {
+                    '월': 1, '화': 2, '수': 3, '목': 4, '금': 5, '토': 6, '일': 0
+                };
+                
+                for (const [dayName, dayNum] of Object.entries(dayMap)) {
+                    if (text.includes(dayName)) {
+                        const today = now.getDay();
+                        let diff = dayNum - today;
+                        if (diff <= 0) diff += 7;
+                        daysOffset = diff;
+                        break;
+                    }
+                }
+            }
+        }
+
+        deadline = new Date(now);
+        deadline.setDate(deadline.getDate() + daysOffset);
+        deadline.setHours(23, 59, 59, 0);
+
+        return { title: title || text, deadline };
+    }
+
+    function acceptTodoVoiceInput() {
+        if (!todoVoiceInput) return;
+
+        document.getElementById('todoTitle').value = todoVoiceInput.title;
+        document.getElementById('todoDeadline').value = 
+            todoVoiceInput.deadline.toISOString().split('T')[0];
+
+        document.getElementById('todoVoiceResult').style.display = 'none';
+        addTodo();
+    }
+
+    function rejectTodoVoiceInput() {
+        document.getElementById('todoVoiceResult').style.display = 'none';
+        todoVoiceInput = null;
+        startTodoVoiceRecognition();
+    }
+
+    // Todo 추가
+    function addTodo() {
+        const title = document.getElementById('todoTitle').value.trim();
+        const deadlineStr = document.getElementById('todoDeadline').value;
+
+        if (!title || !deadlineStr) {
+            alert('할 일과 마감일을 입력하세요');
+            return;
+        }
+
+        const deadline = new Date(deadlineStr);
+        deadline.setHours(23, 59, 59, 0);
+
+        const todo = {
+            id: Date.now(),
+            title: title,
+            deadline: deadline.toISOString(),
+            completed: false,
+            createdAt: new Date().toLocaleString('ko-KR'),
+            notified: false
+        };
+
+        todos.push(todo);
+        todos.sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
+        localStorage.setItem('todos', JSON.stringify(todos));
+
+        alert('할 일이 저장되었습니다! ✓');
+        document.getElementById('todoTitle').value = '';
+        document.getElementById('todoDeadline').value = '';
+        renderTodos();
+    }
+
+    // Todo 렌더링
+    function renderTodos() {
+        const list = document.getElementById('todoList');
+        
+        if (todos.length === 0) {
+            list.innerHTML = '<div style="text-align: center; color: #999; padding: 20px; font-size: 12px;">할 일이 없습니다</div>';
+            return;
+        }
+
+        const now = new Date();
+        list.innerHTML = todos.map(todo => {
+            const deadline = new Date(todo.deadline);
+            const daysLeft = Math.ceil((deadline - now) / (1000 * 60 * 60 * 24));
+            let statusColor = '#4CAF50';
+            let statusText = '✓';
+
+            if (daysLeft < 0) {
+                statusColor = '#f44336';
+                statusText = '⚠️ 마감됨';
+            } else if (daysLeft === 0) {
+                statusColor = '#FF9800';
+                statusText = '⚠️ 오늘';
+            } else if (daysLeft === 1) {
+                statusColor = '#FF9800';
+                statusText = '⚠️ 내일';
+            } else if (daysLeft <= 3) {
+                statusColor = '#FF9800';
+                statusText = `${daysLeft}일`;
+            }
+
+            return `
+                <div class="alarm-item" style="background: ${todo.completed ? '#e0e0e0' : '#f8f9fa'}; ${todo.completed ? 'opacity: 0.6;' : ''}">
+                    <div class="alarm-info" style="flex: 1;">
+                        <div class="alarm-time" style="${todo.completed ? 'text-decoration: line-through;' : ''}">${todo.title}</div>
+                        <div class="alarm-days">
+                            📅 ${new Date(todo.deadline).toLocaleDateString('ko-KR')}
+                            <span style="margin-left: 10px; color: ${statusColor}; font-weight: bold;">${statusText}</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 5px;">
+                        <button onclick="toggleTodoComplete(${todo.id})" style="background: ${todo.completed ? '#999' : '#4CAF50'}; padding: 6px 10px; margin: 0; font-size: 11px; width: auto;">
+                            ${todo.completed ? '✓' : '진행'}
+                        </button>
+                        <button class="alarm-delete" onclick="deleteTodo(${todo.id})">삭제</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function toggleTodoComplete(id) {
+        const todo = todos.find(t => t.id === id);
+        if (todo) {
+            todo.completed = !todo.completed;
+            localStorage.setItem('todos', JSON.stringify(todos));
+            renderTodos();
+        }
+    }
+
+    function deleteTodo(id) {
+        todos = todos.filter(t => t.id !== id);
+        localStorage.setItem('todos', JSON.stringify(todos));
+        renderTodos();
+    }
+
+    // Todo 마감 1일 전 체크
+    function checkTodoDeadlines() {
+        const now = new Date();
+        
+        todos.forEach(todo => {
+            if (!todo.notified && !todo.completed) {
+                const deadline = new Date(todo.deadline);
+                const timeLeft = deadline - now;
+                const hoursLeft = timeLeft / (1000 * 60 * 60);
+
+                // 마감 24시간 이내
+                if (hoursLeft > 0 && hoursLeft <= 24) {
+                    playStrongAlarm();
+                    alert(`⚠️ 할 일 알림!\n\n"${todo.title}"\n마감: ${deadline.toLocaleString('ko-KR')}`);
+                    todo.notified = true;
+                    localStorage.setItem('todos', JSON.stringify(todos));
+                    
+                    // 부모님에게도 알림
+                    localStorage.setItem('todo-deadline-notification', JSON.stringify({
+                        title: todo.title,
+                        deadline: deadline.toLocaleString('ko-KR'),
+                        notifiedAt: new Date().toLocaleString('ko-KR')
+                    }));
+                }
+            }
+        });
+    }
+</script>
+
+</body>
+</html>

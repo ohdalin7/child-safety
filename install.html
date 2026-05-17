@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#667eea">
+    <title>앱 선택 - 설치</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 25px;
+            padding: 40px 30px;
+            box-shadow: 0 20px 70px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #999;
+        }
+
+        .choice-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .choice-card {
+            background: #f9f9f9;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .choice-card:hover {
+            border-color: #667eea;
+            background: #f0f0ff;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.2);
+        }
+
+        .choice-emoji {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .choice-title {
+            font-size: 16px;
+            color: #333;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .choice-desc {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .single-column {
+            grid-column: 1 / -1;
+        }
+
+        .button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-back {
+            background: #f0f0f0;
+            color: #333;
+            margin-top: 15px;
+        }
+
+        .btn-back:hover {
+            background: #e0e0e0;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #1565c0;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 480px) {
+            .choice-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>어떤 앱을 설치하시나요?</h1>
+        <p class="subtitle">아이용 또는 부모님용을 선택하세요</p>
+    </div>
+
+    <div class="info-box">
+        💡 <strong>팁:</strong> 아이와 부모님이 각각 자신의 앱을 설치해야 합니다.
+        링크를 나누어 주세요.
+    </div>
+
+    <div class="choice-grid">
+        <div class="choice-card" onclick="selectApp('child')">
+            <div class="choice-emoji">🧒</div>
+            <div class="choice-title">아이용</div>
+            <div class="choice-desc">백그라운드에서 자동 작동</div>
+        </div>
+
+        <div class="choice-card" onclick="selectApp('parent')">
+            <div class="choice-emoji">👨‍👩</div>
+            <div class="choice-title">부모님용</div>
+            <div class="choice-desc">매일 상태 확인</div>
+        </div>
+    </div>
+
+    <button class="button btn-back" onclick="goBack()">뒤로 가기</button>
+</div>
+
+<script>
+    function selectApp(type) {
+        if (type === 'child') {
+            window.location.href = 'final-child-app.html';
+        } else if (type === 'parent') {
+            window.location.href = 'final-parent-app.html';
+        }
+    }
+
+    function goBack() {
+        window.history.back();
+    }
+</script>
+
+</body>
+</html>
